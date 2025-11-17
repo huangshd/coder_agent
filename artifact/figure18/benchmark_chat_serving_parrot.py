@@ -175,17 +175,25 @@ def main(args: argparse.Namespace):
     input_requests = sample_requests(args.dataset, args.num_prompts, tokenizer)
 
     global vm
-    vm = P.VirtualMachine(os_http_addr="http://localhost:9000", mode="debug")
+    vm = P.VirtualMachine(os_http_addr="http://0.0.0.0:9000", mode="debug")
     vm.set_global_env()
+
+    # async def _main():
+    #     await benchmark(
+    #             input_requests,
+    #             args.request_rate,
+    #         ) 
 
     benchmark_start_time = time.perf_counter_ns()
 
+    # with vm.running_scope():
     asyncio.run(
         benchmark(
             input_requests,
             args.request_rate,
         )
     )
+    # vm.run(_main, timeit=True)
 
     global REQUEST_LATENCY
 

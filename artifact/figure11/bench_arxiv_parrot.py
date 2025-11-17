@@ -140,3 +140,7 @@ if __name__ == "__main__":
         for i in range(10):
             for bs in [512, 1024, 1536, 2048]:
                 main(f"article_{i}", bs, 50)
+    elif arg == "exp3":
+        for i in range(2):
+            for bs in [2048]:
+                main(f"article_{i}", bs, 50)

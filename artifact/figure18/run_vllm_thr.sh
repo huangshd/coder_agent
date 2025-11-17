@@ -3,7 +3,7 @@
 rm result_vllm_thr.txt
 touch result_vllm_thr.txt
 
-for i in {1..5}
+for i in {1..2}
 do
     echo "Test Mixed Serving: vLLM (Throughput) [$i / 5]"
 
@@ -12,9 +12,9 @@ do
     
     export VLLM_REQ_TRACK=1
 
-    bash ../fastchat_scripts/launch_vllm_multi.sh
+    bash ../fastchat_scripts/launch_vllm_7b.sh
 
-    export OPENAI_API_BASE=http://localhost:8000/v1
+    export OPENAI_API_BASE=http://0.0.0.0:8000/v1
     export OPENAI_API_KEY=EMPTY
 
     python3 start_benchmark_vllm.py &> vllm_client.log
@@ -23,4 +23,5 @@ do
     python3 parse_vllm_time.py >> result_vllm_thr.txt
 
     bash ../../scripts/kill_all_fastchat_servers.sh
+    # bash ../../scripts/kill_all_vllm_servers.sh
 done

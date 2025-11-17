@@ -93,14 +93,16 @@ async def send_request(
 ) -> None:
     global REQUEST_LATENCY
 
-    chunk_size = 1024
+    chunk_size = 256
     output_length = 50
 
     file_name = f"article_{article_no}"
     map_chain, reduce_chain = prepare_chains(output_length)
     split_docs = prepare_docs(file_name, chunk_size)
+    # HACK (mo): [OOM] since the chunksize as 256, here chunk_num = 301, so we set small chunk_num here.
+    chunk_num = 75
     coros = []
-    for doc in split_docs:
+    for doc in split_docs[:chunk_num]:
         coros.append(amap(map_chain=map_chain, doc=doc.page_content))
 
     request_start_time = time.perf_counter_ns()

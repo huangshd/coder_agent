@@ -103,7 +103,8 @@ CONCISE SUMMARY:{{summary}}""",
 def sample_requests(
     num_apps: int,
 ) -> List[int]: # article_no
-    return [(0, 0.5), (0, 0.5), (0, 10), (0, 0.5), (0, 0.5), (0, 10), (0, 0.5), (0, 0.5), (0, 10)]
+    # return [(0, 0.5), (0, 0.5), (0, 10), (0, 0.5), (0, 0.5), (0, 10), (0, 0.5), (0, 0.5), (0, 10)][:num_apps]
+    return [(0, 5), (0, 5), (0, 5), (0, 5), (0, 5), (0, 5), (0, 5), (0, 5), (0, 5)][:num_apps]
 
 
 async def get_request(
@@ -126,17 +127,22 @@ async def send_request(
 ) -> None:
     global REQUEST_LATENCY
 
-    chunk_size = 1024
+    chunk_size = 256
     output_length = 50
 
     file_name = f"article_{article_no}"
     chunks = get_chunks(file_name, chunk_size)
     chunk_num = len(chunks)
+    # HACK (mo): [OOM] since the chunksize as 256, here chunk_num = 301, so we set small chunk_num here.
+    chunk_num = 75
+    # print(f"Total chunks: # {chunk_num} ")
+    # print(f"We take # {20} ")
     map_func, reduce_func = get_map_reduce_functions(vm, chunk_num, output_length)
    
     docs = [P.variable(name=f"output_{i}") for i in range(chunk_num)]
     coros = []
-    for i, chunk in enumerate(chunks):
+    # for i, chunk in enumerate(chunks):
+    for i, chunk in enumerate(chunks[:chunk_num]):
         coros.append(map_func.ainvoke(text=chunk, summary=docs[i]))
     
     request_start_time = time.perf_counter_ns()
@@ -170,8 +176,14 @@ def main(args: argparse.Namespace):
 
     input_requests = sample_requests(args.num_apps)
 
-    vm = P.VirtualMachine(os_http_addr="http://localhost:9000", mode="debug")
+    vm = P.VirtualMachine(os_http_addr="http://0.0.0.0:9000", mode="debug")
     vm.set_global_env()
+    # async def _main():
+    #     await benchmark(
+    #         vm,
+    #         input_requests,
+    #         args.app_rate,
+    #     )
 
     benchmark_start_time = time.perf_counter_ns()
 
@@ -182,6 +194,7 @@ def main(args: argparse.Namespace):
             args.app_rate,
         )
     )
+    # vm.run(_main, timeit=True)
 
     benchmark_end_time = time.perf_counter_ns()
 

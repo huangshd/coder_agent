@@ -1,0 +1,3 @@
+Average Normlat: 4052.3152 ms
+Average decode time: 59.7007 ms
+MR JCT: 126149.3700 ms

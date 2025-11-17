@@ -19,7 +19,7 @@ python3 -m fastchat.serve.vllm_worker \
     --tokenizer hf-internal-testing/llama-tokenizer \
     --host 0.0.0.0 \
     --port 21002 \
-    --max-num-batched-tokens 4000 \
+    --max-num-batched-tokens 8000 \
     --seed 0 &> worker_vllm_stdout.log &
 
 

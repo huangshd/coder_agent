@@ -2,7 +2,7 @@
 
 # Run vLLM benchmark
 
-export VLLM_CAPACITY=1024
+export VLLM_CAPACITY=4096
 
 rm result_vllm_olen.txt
 rm result_vllm_csize.txt

@@ -3,12 +3,12 @@
 rm result_parrot.txt
 touch result_parrot.txt
 
-for i in {1..5}
+for i in {1..2}
 do
     echo "Test Mixed Serving: Parrot [$i / 5]"
 
     rm -rf log
-    rm *.log -rf
+    # rm *.log -rf
 
     pwd=$PWD
     log_path=$pwd/log/
@@ -17,7 +17,7 @@ do
 
     # Launch cluster
     cd cluster_4_vicuna_7b
-    bash launch.sh $log_path os.log engine1.log engine2.log engine3.log engine4.log
+    bash launch.sh $log_path os.log engine1.log engine2.log 
 
     # Run benchmark
     cd ..

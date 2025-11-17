@@ -9,11 +9,12 @@ log_path=$pwd/log/
 echo $log_path
 
 cd cluster_1_vicuna_7b/
-bash launch.sh $log_path os.log engine.log
+bash launch.sh $log_path os.log engine1.log engine2.log
 cd ..
 echo "Run Parrot benchmark ... [All]"
 python3 bench_arxiv_parrot.py exp1 > result_parrot_olen.txt
 python3 bench_arxiv_parrot.py exp2 > result_parrot_csize.txt
+# python3 bench_arxiv_parrot.py exp3 > result_parrot_test3.txt
 bash ../../scripts/kill_all_servers.sh
 
 # Plot the results
