@@ -827,3 +827,4 @@ latencies = parse_latency(raw_data)
 def get_latency():
     global latencies
     return numpy.random.choice(latencies) / 1e3  # ms -> s
+    # return 0 # HACK if it work for both
