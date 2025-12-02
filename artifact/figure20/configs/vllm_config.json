@@ -1,0 +1,74 @@
+{
+  "vllm_instances": [
+    {
+      "instance_id": "instance-1",
+      "description": "Throughput-optimized instance (GPU 0-1)",
+      "gpu_ids": [0, 1],
+      "model": "lmsys/vicuna-7b-v1.3",
+      "tensor_parallel_size": 2,
+      "pipeline_parallel_size": 1,
+      "gpu_memory_utilization": 0.9,
+      "swap_space": 16,
+      "max_num_batched_tokens": 16000,
+      "max_batch_size": 32,
+      "max_seq_len": 2048,
+      "enable_prefix_caching": true,
+      "num_scheduler_steps": 1,
+      "log_requests": false
+    },
+    {
+      "instance_id": "instance-2",
+      "description": "Latency-optimized instance (GPU 2-3)",
+      "gpu_ids": [2, 3],
+      "model": "lmsys/vicuna-7b-v1.3",
+      "tensor_parallel_size": 2,
+      "pipeline_parallel_size": 1,
+      "gpu_memory_utilization": 0.85,
+      "swap_space": 8,
+      "max_num_batched_tokens": 8000,
+      "max_batch_size": 16,
+      "max_seq_len": 2048,
+      "enable_prefix_caching": true,
+      "num_scheduler_steps": 1,
+      "log_requests": false
+    },
+    {
+      "instance_id": "instance-3",
+      "description": "Balanced instance (GPU 4-5)",
+      "gpu_ids": [4, 5],
+      "model": "lmsys/vicuna-7b-v1.3",
+      "tensor_parallel_size": 2,
+      "pipeline_parallel_size": 1,
+      "gpu_memory_utilization": 0.85,
+      "swap_space": 12,
+      "max_num_batched_tokens": 12000,
+      "max_batch_size": 24,
+      "max_seq_len": 2048,
+      "enable_prefix_caching": true,
+      "num_scheduler_steps": 1,
+      "log_requests": false
+    },
+    {
+      "instance_id": "instance-4",
+      "description": "Auxiliary/Fallback instance (GPU 6-7)",
+      "gpu_ids": [6, 7],
+      "model": "lmsys/vicuna-7b-v1.3",
+      "tensor_parallel_size": 2,
+      "pipeline_parallel_size": 1,
+      "gpu_memory_utilization": 0.8,
+      "swap_space": 12,
+      "max_num_batched_tokens": 12000,
+      "max_batch_size": 24,
+      "max_seq_len": 2048,
+      "enable_prefix_caching": true,
+      "num_scheduler_steps": 1,
+      "log_requests": false
+    }
+  ],
+  "global_settings": {
+    "tokenizer_mode": "auto",
+    "trust_remote_code": false,
+    "distributed_executor_backend": "mp",
+    "seed": 0
+  }
+}

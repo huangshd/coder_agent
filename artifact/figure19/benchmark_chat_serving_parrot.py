@@ -118,9 +118,11 @@ async def send_request(
     req_no = req_counter
     req_counter += 1
 
+    # Chat tasks: route to low-latency agent (GPU 1) for interactive responses
     func = vm.define_function(
         func_name="chat",
         func_body="{{input}}{{output}}",
+        models=["/app/artifact/figure19/cluster_4_vicuna_7b/model_aliases/latency-agent"],
         params=[
             P.Parameter("input", P.ParamType.INPUT_LOC),
             P.Parameter(

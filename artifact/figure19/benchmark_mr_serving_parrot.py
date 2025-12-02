@@ -44,12 +44,14 @@ def get_chunks(file_name: str, chunk_size: int):
 
 
 def get_map_reduce_functions(vm: P.VirtualMachine, chunk_num: int, output_len: int):
+    # Map phase: route to high-throughput agent (GPU 0) for batch processing
     map_func = vm.define_function(
         func_name=None,
         func_body="""Write an one-sentence summary (AS SHORT AS POSSIBLE) of the following:
 {{text}}
 CONCISE SUMMARY:{{summary}}""",
         cache_prefix=False,
+        models=["/app/artifact/figure19/cluster_4_vicuna_7b/model_aliases/throughput-agent"],
         params=[
             P.Parameter(name="text", typ=P.ParamType.INPUT_LOC),
             P.Parameter(
@@ -90,10 +92,12 @@ CONCISE SUMMARY:{{summary}}""",
         )
     )
 
+    # Reduce phase: route to low-latency agent (GPU 1) for interactive response
     reduce_func = vm.define_function(
         func_name=None,
-        func_body=reduce_template,
+        func_body=reduce_template, 
         cache_prefix=False,
+        models=["/app/artifact/figure19/cluster_4_vicuna_7b/model_aliases/latency-agent"],
         params=input_params + [output_param],
     )
 

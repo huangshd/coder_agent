@@ -1,0 +1,79 @@
+{
+  "coder": {
+    "name": "coder_agent",
+    "llm_model_name": "lmsys/vicuna-7b-v1.3",
+    "max_tokens": 2048,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "timeout": 30.0,
+    "num_workers": 3,
+    "max_iterations": 3,
+    "worker_affinity": "same_instance",
+    "description": "Code generation with iterative refinement"
+  },
+  "rag": {
+    "name": "rag_agent",
+    "llm_model_name": "lmsys/vicuna-7b-v1.3",
+    "max_tokens": 1024,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "timeout": 5.0,
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "top_k_retrieval": 5,
+    "affinity_required": true,
+    "cache_context": true,
+    "description": "Retrieval-augmented generation with reranking"
+  },
+  "multimodal": {
+    "name": "multimodal_agent",
+    "llm_model_name": "lmsys/vicuna-7b-v1.3",
+    "max_tokens": 1536,
+    "temperature": 0.5,
+    "top_p": 0.9,
+    "timeout": 10.0,
+    "ocr_model": "paddleocr",
+    "ocr_device": "cpu",
+    "asr_model": "whisper",
+    "asr_model_size": "base",
+    "asr_device": "cpu",
+    "max_frames_per_video": 5,
+    "separate_from_llm": true,
+    "description": "Multimodal understanding (image, audio, video)"
+  },
+  "chatbox": {
+    "name": "chatbox_agent",
+    "llm_model_name": "lmsys/vicuna-7b-v1.3",
+    "max_tokens": 512,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "timeout": 2.0,
+    "session_affinity": true,
+    "enable_prefix_caching": true,
+    "max_history_tokens": 2000,
+    "description": "Conversational chatbot with session management"
+  },
+  "auxiliary_models": {
+    "embedding": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "device": "cpu",
+      "batch_size": 32
+    },
+    "reranker": {
+      "model_name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "device": "cpu"
+    },
+    "ocr": {
+      "model_type": "paddleocr",
+      "language": "en",
+      "device": "cpu",
+      "use_gpu": false
+    },
+    "asr": {
+      "model_type": "whisper",
+      "model_size": "base",
+      "device": "cpu",
+      "language": null
+    }
+  }
+}

@@ -82,11 +82,99 @@ Each vLLM worker must specify a unique `--worker-address` parameter when registe
 
 Without unique worker addresses, the second worker would overwrite the first worker's registration, causing only one model to be available.
 
-## Parrot Implementation
+## Parrot Implementation: Multi-Agent Collaboration
 
-For the Parrot version with hybrid deployment, you would need to:
-1. Configure two separate Parrot engine instances
-2. Implement similar routing logic in the Parrot benchmark scripts
-3. Use Parrot's semantic variable tagging to route different phases to different engines
+The Parrot implementation demonstrates **multi-agent collaboration** where different task types are explicitly routed to specialized LLM agents. This setup simulates heterogeneous multi-LLM deployments, enabling research on multi-agent coordination and workload-aware routing.
 
-This is a TODO for future work.
+### Multi-Agent Architecture
+
+**Throughput Agent (GPU 0)**:
+- Model identifier: `model_aliases/throughput-agent`
+- Optimized for: High throughput batch processing
+- Configuration: `max_num_batched_tokens=16000`
+- Task assignment: MapReduce Map operations
+
+**Latency Agent (GPU 1)**:
+- Model identifier: `model_aliases/latency-agent`
+- Optimized for: Low latency interactive responses
+- Configuration: `max_num_batched_tokens=8000`
+- Task assignment: MapReduce Reduce operations + Chat queries
+
+### Key Implementation Details
+
+1. **Model Aliases for Agent Identification**: Both agents load the same base model (`lmsys/vicuna-7b-v1.3`) but use different filesystem paths as distinct identifiers. This allows Parrot's dispatcher to route tasks to specific agents.
+
+   ```bash
+   model_aliases/
+   ├── throughput-agent  → ~/.cache/huggingface/hub/.../snapshots/xxx/
+   └── latency-agent     → ~/.cache/huggingface/hub/.../snapshots/xxx/
+   ```
+
+2. **Explicit Task Routing**: Benchmark code specifies target agent via the `models` parameter:
+
+   ```python
+   # Map phase → Throughput Agent (GPU 0)
+   map_func = vm.define_function(
+       models=["/path/to/model_aliases/throughput-agent"],
+       ...
+   )
+
+   # Reduce & Chat → Latency Agent (GPU 1)
+   reduce_func = vm.define_function(
+       models=["/path/to/model_aliases/latency-agent"],
+       ...
+   )
+   ```
+
+3. **Multi-Agent Simulation**: This setup simulates heterogeneous multi-LLM environments for research on:
+   - Multi-agent task coordination patterns
+   - Heterogeneous model deployment strategies
+   - Workload-aware routing policies
+   - Agent specialization for different task types
+
+### Setup Process
+
+The cluster launch script performs:
+
+1. Downloads base model from HuggingFace (if not cached)
+2. Creates model aliases:
+   ```bash
+   bash create_model_aliases.sh
+   ```
+   This creates two symlinks pointing to the same model snapshot but with different absolute paths
+3. Starts Parrot OS server
+4. Starts two engine servers with different configurations and model identifiers
+
+### How to Run
+
+Individual cluster launch:
+```bash
+cd cluster_4_vicuna_7b
+bash launch.sh <log_dir> os.log engine1.log engine2.log
+```
+
+Automated benchmark:
+```bash
+cd artifact/figure19
+bash run_prt.sh
+```
+
+### Comparison: vLLM vs Parrot
+
+Both implementations achieve task-specific routing but through different mechanisms:
+
+| Aspect | vLLM + LangChain | Parrot |
+|--------|------------------|--------|
+| Routing layer | LangChain (application) | Parrot dispatcher (framework) |
+| Agent identification | FastChat model names | Filesystem paths |
+| Configuration | FastChat controller | Engine configs |
+| Use case | Production multi-model serving | Research on multi-agent systems |
+
+### Future Work: Heterogeneous Multi-LLM
+
+Current implementation uses the same model with different identifiers. For true heterogeneous deployments:
+
+1. Configure each engine with different models (e.g., Llama-70B, Llama-7B)
+2. Route complex reasoning → Large model, Simple tasks → Small model
+3. Implement dynamic routing policies based on task complexity
+4. Research optimal model-to-task assignment strategies

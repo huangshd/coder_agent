@@ -1,0 +1,77 @@
+{
+  "coder_benchmark": {
+    "num_requests": 50,
+    "concurrency": 5,
+    "request_template": {
+      "task": "Write a Python function to solve {problem_type}"
+    },
+    "problem_types": [
+      "sorting algorithm",
+      "graph traversal",
+      "dynamic programming",
+      "string manipulation",
+      "data structure operations"
+    ],
+    "expected_slo_ms": 30000
+  },
+  "rag_benchmark": {
+    "num_requests": 100,
+    "concurrency": 20,
+    "request_template": {
+      "query": "{query}",
+      "documents": []
+    },
+    "queries": [
+      "What is machine learning?",
+      "How does neural network training work?",
+      "Explain transformer architecture",
+      "What are attention mechanisms?",
+      "How does BERT work?"
+    ],
+    "expected_slo_ms": 5000
+  },
+  "multimodal_benchmark": {
+    "num_requests": 20,
+    "concurrency": 5,
+    "request_template": {
+      "modality": "{modality}",
+      "content": "{file_path}",
+      "query": "{question}"
+    },
+    "modalities": ["image", "audio", "video"],
+    "questions": [
+      "What is in this image?",
+      "What is being said in this audio?",
+      "Describe what happens in this video"
+    ],
+    "expected_slo_ms": 10000
+  },
+  "chatbox_benchmark": {
+    "num_requests": 200,
+    "concurrency": 50,
+    "num_sessions": 20,
+    "request_template": {
+      "session_id": "{session_id}",
+      "message": "{message}"
+    },
+    "initial_messages": [
+      "Hi, how are you?",
+      "What is AI?",
+      "Tell me about machine learning"
+    ],
+    "follow_up_messages": [
+      "Can you explain that more?",
+      "What are some examples?",
+      "How does that work?",
+      "Interesting, tell me more"
+    ],
+    "expected_slo_ms": 2000
+  },
+  "global_settings": {
+    "warmup_requests": 10,
+    "cooldown_seconds": 5,
+    "enable_metrics": true,
+    "metrics_output_dir": "./results",
+    "results_filename_template": "{agent_type}_{timestamp}.json"
+  }
+}
