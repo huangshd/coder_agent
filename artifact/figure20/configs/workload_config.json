@@ -1,0 +1,65 @@
+{
+  "coder": {
+    "num_requests": 50,
+    "request_rate": 1.0,
+    "endpoint": "http://localhost:8000",
+    "model": "gpt-3.5-turbo",
+    "description": "Code generation with iterative refinement"
+  },
+  "rag": {
+    "num_requests": 100,
+    "request_rate": 2.0,
+    "endpoint": "http://localhost:8000",
+    "model": "gpt-3.5-turbo",
+    "description": "Retrieval-augmented generation"
+  },
+  "multimodal": {
+    "num_requests": 30,
+    "request_rate": 0.5,
+    "endpoint": "http://localhost:8000",
+    "model": "gpt-3.5-turbo",
+    "description": "Multimodal processing (image/audio/video)"
+  },
+  "chatbox": {
+    "num_requests": 200,
+    "request_rate": 5.0,
+    "endpoint": "http://localhost:8000",
+    "model": "gpt-3.5-turbo-latency",
+    "description": "Conversational chatbot"
+  },
+  "deployment_strategy": {
+    "comment": "Heterogeneous deployment similar to Figure19",
+    "worker_1": {
+      "gpu": 0,
+      "role": "high-throughput",
+      "agents": ["coder", "multimodal"],
+      "model_name": "gpt-3.5-turbo"
+    },
+    "worker_2": {
+      "gpu": 1,
+      "role": "low-latency",
+      "agents": ["rag", "chatbox"],
+      "model_name": "gpt-3.5-turbo-latency"
+    }
+  },
+  "mixed_workload_presets": {
+    "light": {
+      "coder": {"num_requests": 10, "request_rate": 0.5},
+      "rag": {"num_requests": 20, "request_rate": 1.0},
+      "chatbox": {"num_requests": 40, "request_rate": 2.0},
+      "multimodal": {"num_requests": 5, "request_rate": 0.2}
+    },
+    "medium": {
+      "coder": {"num_requests": 50, "request_rate": 1.0},
+      "rag": {"num_requests": 100, "request_rate": 2.0},
+      "chatbox": {"num_requests": 200, "request_rate": 5.0},
+      "multimodal": {"num_requests": 30, "request_rate": 0.5}
+    },
+    "heavy": {
+      "coder": {"num_requests": 100, "request_rate": 2.0},
+      "rag": {"num_requests": 200, "request_rate": 4.0},
+      "chatbox": {"num_requests": 400, "request_rate": 10.0},
+      "multimodal": {"num_requests": 60, "request_rate": 1.0}
+    }
+  }
+}

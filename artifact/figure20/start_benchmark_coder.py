@@ -16,7 +16,7 @@ def start_coder_benchmark(barrier: Barrier, num_requests: int, concurrency: int,
     barrier.wait()
 
     dataset_path = "../workloads/sharegpt/ShareGPT_V3_unfiltered_cleaned_split.json"
-
+    
     os.system(
         f"""python3 benchmarks/benchmark_coder.py \
         --num-requests {num_requests} \
@@ -35,7 +35,7 @@ if __name__ == "__main__":
                        help="Number of requests")
     parser.add_argument("--concurrency", type=int, default=5,
                        help="Concurrency level")
-    parser.add_argument("--vllm-endpoint", type=str, default="http://localhost:8000",
+    parser.add_argument("--vllm-endpoint", type=str, default="http://0.0.0.0:8000",
                        help="vLLM endpoint")
     parser.add_argument("--model-name", type=str, default="gpt-3.5-turbo",
                        help="Model name for routing")

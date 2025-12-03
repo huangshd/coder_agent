@@ -12,7 +12,8 @@ from datetime import datetime
 from typing import List, Dict, Any
 from pathlib import Path
 import sys
-sys.path.insert(0, '/home/mo/Project/parrot/ParrotServe/artifact/figure20')
+# Add parent directory to path (works both locally and in Docker)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from agents import CoderAgent, AgentConfig, PerformanceMetrics
 from dispatcher import RequestDispatcher
@@ -25,7 +26,7 @@ class CoderBenchmark:
     def __init__(self, num_requests: int = 50, concurrency: int = 5,
                  config_path: str = "./configs/benchmark_config.json",
                  dataset_path: str = None,
-                 vllm_endpoint: str = "http://localhost:8000"):
+                 vllm_endpoint: str = "http://0.0.0.0:8000"):
         """
         Initialize benchmark.
 
@@ -248,6 +249,7 @@ async def main():
 
     args = parser.parse_args()
 
+    print("SATART Benching coder!")
     # Create benchmark
     benchmark = CoderBenchmark(
         num_requests=args.num_requests,

@@ -41,11 +41,13 @@ class CoderAgent(BaseAgent):
             self.llm = llm
         else:
             # Initialize ChatOpenAI with vLLM backend
+            # Ensure endpoint has /v1 suffix for OpenAI-compatible API
+            api_base = vllm_endpoint.rstrip('/') + '/v1'
             self.llm = ChatOpenAI(
                 temperature=config.temperature,
                 model_name=model_name,
                 max_tokens=config.max_tokens,
-                openai_api_base=vllm_endpoint,
+                openai_api_base=api_base,
             )
 
         self.num_workers = 3  # Can be configured
