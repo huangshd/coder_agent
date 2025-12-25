@@ -1,304 +1,441 @@
-"""
-Coder Agent Benchmark Script
-Benchmarks code generation with iterative refinement
-"""
+# benchmark_improved_coder.py
+# 改进版 Coder 工作流的基准测试程序
 
+import argparse
 import asyncio
 import json
-import time
-import argparse
 import random
-from datetime import datetime
-from typing import List, Dict, Any
+import time
+from typing import AsyncGenerator, List, Optional
+from dataclasses import asdict
 from pathlib import Path
 import sys
-# Add parent directory to path (works both locally and in Docker)
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from agents import CoderAgent, AgentConfig, PerformanceMetrics
-from dispatcher import RequestDispatcher
-from langchain.chat_models import ChatOpenAI
+import numpy as np
 
-
-class CoderBenchmark:
-    """Benchmark suite for Coder Agent"""
-
-    def __init__(self, num_requests: int = 50, concurrency: int = 5,
-                 config_path: str = "./configs/benchmark_config.json",
-                 dataset_path: str = None,
-                 vllm_endpoint: str = "http://0.0.0.0:8000"):
-        """
-        Initialize benchmark.
-
-        Args:
-            num_requests: Number of requests to generate
-            concurrency: Concurrent request limit
-            config_path: Path to benchmark config
-            dataset_path: Path to dataset file (ShareGPT format)
-            vllm_endpoint: vLLM server endpoint
-        """
-        self.num_requests = num_requests
-        self.concurrency = concurrency
-        self.config_path = config_path
-        self.dataset_path = dataset_path
-        self.vllm_endpoint = vllm_endpoint
-        self.results: List[PerformanceMetrics] = []
-
-        # Load config
-        self.config = self._load_config()
-
-    def _load_config(self) -> Dict[str, Any]:
-        """Load benchmark configuration"""
-        try:
-            with open(self.config_path, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return self._default_config()
-
-    def _default_config(self) -> Dict[str, Any]:
-        """Return default configuration if file not found"""
-        return {
-            "coder_benchmark": {
-                "problem_types": [
-                    "fibonacci sequence",
-                    "binary search",
-                    "array sorting",
-                    "tree traversal"
-                ]
-            }
-        }
-
-    def _load_dataset_from_sharegpt(self, dataset_path: str, num_samples: int) -> List[str]:
-        """Load and sample prompts from ShareGPT dataset"""
-        try:
-            with open(dataset_path, 'r') as f:
-                dataset = json.load(f)
-
-            # Filter conversations with at least 2 turns
-            dataset = [data for data in dataset if len(data.get("conversations", [])) >= 2]
-
-            # Extract first turn prompts
-            prompts = [data["conversations"][0]["value"] for data in dataset]
-
-            # Sample prompts
-            if len(prompts) > num_samples:
-                prompts = random.sample(prompts, num_samples)
-
-            return prompts
-        except Exception as e:
-            print(f"Warning: Failed to load dataset from {dataset_path}: {e}")
-            return []
-
-    def generate_requests(self) -> List[Dict[str, Any]]:
-        """Generate benchmark requests"""
-        requests = []
-
-        # If dataset path is provided, sample from it
-        if self.dataset_path and Path(self.dataset_path).exists():
-            prompts = self._load_dataset_from_sharegpt(self.dataset_path, self.num_requests)
-            for i, prompt in enumerate(prompts):
-                requests.append({
-                    "request_id": f"coder_req_{i:04d}",
-                    "task": prompt,
-                    "expected_tokens": 500 + (i % 500)
-                })
-            print(f"Loaded {len(requests)} requests from dataset: {self.dataset_path}")
-        else:
-            # Use synthetic problem types
-            problem_types = self.config.get("coder_benchmark", {}).get(
-                "problem_types", ["generic coding task"]
-            )
-
-            for i in range(self.num_requests):
-                problem_type = problem_types[i % len(problem_types)]
-                requests.append({
-                    "request_id": f"coder_req_{i:04d}",
-                    "task": f"Write a Python function to implement {problem_type}",
-                    "expected_tokens": 500 + (i % 500)
-                })
-            print(f"Generated {len(requests)} synthetic requests")
-
-        return requests
-
-    async def run_single_request(self, agent: CoderAgent, request: Dict[str, Any]) -> PerformanceMetrics:
-        """
-        Run single request through agent.
-
-        Args:
-            agent: CoderAgent instance
-            request: Request data
-
-        Returns:
-            Performance metrics
-        """
-        try:
-            # Note: In real scenario, would call actual LLM
-            # For now, simulate execution
-            output, metrics = await agent.execute({
-                "task": request["task"]
-            })
-            return metrics
-        except Exception as e:
-            print(f"Error processing request {request['request_id']}: {e}")
-            return None
-
-    async def run_benchmark(self, agent: CoderAgent) -> Dict[str, Any]:
-        """
-        Run complete benchmark suite.
-
-        Args:
-            agent: CoderAgent instance
-
-        Returns:
-            Benchmark results
-        """
-        print(f"Starting Coder Agent Benchmark")
-        print(f"  Requests: {self.num_requests}")
-        print(f"  Concurrency: {self.concurrency}")
-
-        requests = self.generate_requests()
-        start_time = time.time()
-
-        # Process requests with concurrency limit
-        semaphore = asyncio.Semaphore(self.concurrency)
-
-        async def bounded_request(req):
-            async with semaphore:
-                return await self.run_single_request(agent, req)
-
-        tasks = [bounded_request(req) for req in requests]
-        self.results = await asyncio.gather(*tasks)
-
-        # Filter out None results (errors)
-        self.results = [r for r in self.results if r is not None]
-        total_time = time.time() - start_time
-
-        # Generate report
-        return self._generate_report(total_time)
-
-    def _generate_report(self, total_time: float) -> Dict[str, Any]:
-        """Generate benchmark report"""
-        if not self.results:
-            return {"error": "No successful requests"}
-
-        latencies = [r.total_latency_ms for r in self.results]
-        ttfts = [r.ttft_ms for r in self.results if r.ttft_ms]
-        tpots = [r.tpot_ms for r in self.results if r.tpot_ms]
-
-        report = {
-            "timestamp": datetime.now().isoformat(),
-            "agent_type": "coder",
-            "summary": {
-                "total_requests": len(self.results),
-                "successful_requests": len(self.results),
-                "error_rate": 0.0,
-                "total_time_seconds": total_time,
-                "throughput_req_per_sec": len(self.results) / total_time
-            },
-            "latency_metrics": {
-                "avg_latency_ms": sum(latencies) / len(latencies),
-                "min_latency_ms": min(latencies),
-                "max_latency_ms": max(latencies),
-                "p50_latency_ms": sorted(latencies)[len(latencies)//2],
-                "p99_latency_ms": sorted(latencies)[int(len(latencies)*0.99)]
-            },
-            "ttft_metrics": {
-                "avg_ttft_ms": sum(ttfts) / len(ttfts) if ttfts else None,
-                "min_ttft_ms": min(ttfts) if ttfts else None,
-                "max_ttft_ms": max(ttfts) if ttfts else None
-            },
-            "tpot_metrics": {
-                "avg_tpot_ms": sum(tpots) / len(tpots) if tpots else None,
-                "min_tpot_ms": min(tpots) if tpots else None,
-                "max_tpot_ms": max(tpots) if tpots else None
-            }
-        }
-
-        return report
-
-    def save_results(self, results: Dict[str, Any], output_path: str = None):
-        """Save benchmark results to file"""
-        if output_path is None:
-            output_path = f"./results/coder_benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-
-        import os
-        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
-
-        with open(output_path, 'w') as f:
-            json.dump(results, f, indent=2)
-
-        print(f"Results saved to {output_path}")
+# 导入 improved_coder_agent 模块
+sys.path.append(str(Path(__file__).parent.parent))  # 添加项目根目录到路径
+from agents.coder_agent import (
+    ImprovedCoderAgent,
+    ImprovedCoderMetrics
+)
+from agents.base_agent import AgentConfig
 
 
-async def main():
-    parser = argparse.ArgumentParser(description="Benchmark Coder Agent")
-    parser.add_argument("--num-requests", type=int, default=50, help="Number of requests")
-    parser.add_argument("--concurrency", type=int, default=5, help="Concurrency level")
-    parser.add_argument("--config", type=str, default="./configs/benchmark_config.json",
-                       help="Config file path")
-    parser.add_argument("--output", type=str, help="Output file path")
-    parser.add_argument("--dataset", type=str,
-                       default="../workloads/sharegpt/ShareGPT_V3_unfiltered_cleaned_split.json",
-                       help="Dataset path (ShareGPT format)")
-    parser.add_argument("--vllm-endpoint", type=str, default="http://localhost:8000",
-                       help="vLLM server endpoint")
-    parser.add_argument("--model-name", type=str, default="gpt-3.5-turbo",
-                       help="Model name for routing (e.g., gpt-3.5-turbo, gpt-3.5-turbo-latency)")
-    parser.add_argument("--use-mock", action="store_true",
-                       help="Use mock LLM for testing (default: use real vLLM)")
+# 全局性能指标收集
+WORKFLOW_METRICS: List[ImprovedCoderMetrics] = []
 
-    args = parser.parse_args()
 
-    print("SATART Benching coder!")
-    # Create benchmark
-    benchmark = CoderBenchmark(
-        num_requests=args.num_requests,
-        concurrency=args.concurrency,
-        config_path=args.config,
-        dataset_path=args.dataset,
-        vllm_endpoint=args.vllm_endpoint
-    )
+# ==================== 测试数据生成 ====================
 
-    # Create agent configuration
-    config = AgentConfig(
-        name="coder_agent",
-        llm_model_name=args.model_name,
-        max_tokens=2048,
-        temperature=0.7
-    )
-
-    # Create agent with real or mock LLM
-    if args.use_mock:
-        # Create mock LLM for testing
-        class MockLLM:
-            async def ainvoke(self, prompt, **kwargs):
-                await asyncio.sleep(0.1)  # Simulate latency
-                return "mock response"
-
-        agent = CoderAgent(config, MockLLM())
-        print("Using Mock LLM for testing")
+def sample_requests(
+    num_apps: int,
+    prompts_file: Optional[str] = None
+) -> List[str]:
+    """生成测试请求（用户提示）"""
+    
+    base_prompts = [
+        "创建一个Python程序，用于从API获取天气数据并存储到SQLite数据库",
+        "实现一个简单的待办事项(Todo)应用，包含增删改查功能",
+        "编写一个Python脚本，用于批量重命名文件夹中的图片文件",
+        "创建一个Flask web应用，显示实时股票价格",
+        "实现一个简单的机器学习模型，用于手写数字识别",
+        "创建一个Python工具，用于监控网站可用性并发送告警",
+        "编写一个数据可视化脚本，读取CSV文件并生成图表",
+        "实现一个简单的聊天机器人，可以回答常见问题",
+        "创建一个Python程序，用于自动化发送电子邮件报告",
+        "实现一个简单的游戏，比如猜数字或井字棋",
+        "实现一个文件处理工具，统计文本文件的行数、字数、字符数",
+        "创建一个命令行工具，用于管理个人密码（加密存储）",
+        "编写一个Python脚本，自动化备份指定文件夹到云存储",
+        "实现一个简单的HTTP服务器，支持静态文件托管",
+        "创建一个日志分析工具，从日志文件中提取关键信息",
+        "实现一个markdown转HTML的转换工具",
+        "编写一个网络爬虫，抓取指定网站的新闻标题",
+        "创建一个系统监控脚本，定期检查CPU、内存使用率",
+        "实现一个简单的任务调度器，按时间执行指定任务",
+        "编写一个JSON数据验证工具，检查数据格式是否符合schema"
+    ]
+    
+    if prompts_file and Path(prompts_file).exists():
+        with open(prompts_file, 'r', encoding='utf-8') as f:
+            file_prompts = [line.strip() for line in f if line.strip()]
+        prompts = file_prompts[:num_apps] if len(file_prompts) >= num_apps else file_prompts
     else:
-        # Create agent with real vLLM backend via ChatOpenAI
-        agent = CoderAgent(
-            config,
-            vllm_endpoint=args.vllm_endpoint,
-            model_name=args.model_name
+        prompts = []
+        for i in range(num_apps):
+            prompts.append(base_prompts[i % len(base_prompts)])
+    
+    return prompts
+
+
+async def get_request(
+    input_requests: List[str],
+    request_rate: float,
+) -> AsyncGenerator[str, None]:
+    """生成请求流"""
+    input_requests = iter(input_requests)
+    for request in input_requests:
+        yield request
+
+        if request_rate == float("inf"):
+            continue
+        await asyncio.sleep(1.0 / request_rate)
+
+
+# ==================== 基准测试执行 ====================
+
+async def send_request(
+    workflow_id: int,
+    user_prompt: str,
+    agent: ImprovedCoderAgent
+) -> None:
+    """发送单个工作流请求"""
+    global WORKFLOW_METRICS
+    
+    try:
+        input_data = {
+            "user_prompt": user_prompt,
+            "workflow_id": workflow_id
+        }
+        
+        # 执行工作流
+        final_code, base_metrics = await agent.execute(input_data)
+        
+        # 获取详细的 metrics
+        if hasattr(agent, '_current_metrics'):
+            metrics = agent._current_metrics
+            WORKFLOW_METRICS.append(metrics)
+        else:
+            # 备用方案：创建基本的 metrics
+            metrics = ImprovedCoderMetrics(
+                workflow_id=workflow_id,
+                total_latency=base_metrics.total_latency_ms,
+                success=base_metrics.error is None
+            )
+            WORKFLOW_METRICS.append(metrics)
+        
+    except Exception as e:
+        print(f"[工作流 {workflow_id}] 执行失败: {e}")
+        failed_metrics = ImprovedCoderMetrics(
+            workflow_id=workflow_id,
+            success=False
         )
-        print(f"Using Real vLLM backend: {args.vllm_endpoint}")
-        print(f"Model routing name: {args.model_name}")
+        WORKFLOW_METRICS.append(failed_metrics)
 
-    # Run benchmark
-    print(f"\nStarting benchmark with {args.num_requests} requests...")
-    results = await benchmark.run_benchmark(agent)
 
-    # Print and save results
-    print("\n" + "="*60)
-    print("BENCHMARK RESULTS - CODER AGENT")
-    print("="*60)
-    print(json.dumps(results, indent=2))
+async def benchmark(
+    input_requests: List[str],
+    request_rate: float,
+    agent: ImprovedCoderAgent
+) -> None:
+    """执行基准测试"""
+    tasks: List[asyncio.Task] = []
+    
+    workflow_id = 0
+    async for user_prompt in get_request(input_requests, request_rate):
+        workflow_id += 1
+        
+        task = asyncio.create_task(
+            send_request(
+                workflow_id=workflow_id,
+                user_prompt=user_prompt,
+                agent=agent
+            )
+        )
+        tasks.append(task)
+    
+    await asyncio.gather(*tasks)
 
-    benchmark.save_results(results, args.output)
+
+# ==================== 结果保存和统计 ====================
+
+def save_results_to_file(results_file: str = "improved_coder_benchmark_results.json"):
+    """保存基准测试结果到文件"""
+    global WORKFLOW_METRICS
+    
+    results_dict = {
+        "workflow_metrics": [asdict(metric) for metric in WORKFLOW_METRICS],
+        "summary": {
+            "total_workflows": len(WORKFLOW_METRICS),
+            "successful_workflows": sum(1 for m in WORKFLOW_METRICS if m.success),
+            "success_rate": sum(1 for m in WORKFLOW_METRICS if m.success) / len(WORKFLOW_METRICS) if WORKFLOW_METRICS else 0,
+            "avg_total_latency_ms": np.mean([m.total_latency for m in WORKFLOW_METRICS]) if WORKFLOW_METRICS else 0,
+            "avg_planner_latency_ms": np.mean([m.planner_latency for m in WORKFLOW_METRICS]) if WORKFLOW_METRICS else 0,
+            "avg_workers_latency_ms": np.mean([m.workers_latency for m in WORKFLOW_METRICS]) if WORKFLOW_METRICS else 0,
+            "avg_evaluators_latency_ms": np.mean([m.evaluators_latency for m in WORKFLOW_METRICS]) if WORKFLOW_METRICS else 0,
+            "avg_verifier_latency_ms": np.mean([m.verifier_latency for m in WORKFLOW_METRICS]) if WORKFLOW_METRICS else 0,
+            "avg_subtasks_per_workflow": np.mean([m.num_subtasks for m in WORKFLOW_METRICS]) if WORKFLOW_METRICS else 0,
+            "avg_iterations": np.mean([m.num_iterations for m in WORKFLOW_METRICS]) if WORKFLOW_METRICS else 0,
+            "avg_revisions": np.mean([m.num_revisions for m in WORKFLOW_METRICS]) if WORKFLOW_METRICS else 0,
+            "avg_quality_score": np.mean([m.final_quality_score for m in WORKFLOW_METRICS]) if WORKFLOW_METRICS else 0,
+        }
+    }
+    
+    with open(results_file, 'w', encoding='utf-8') as f:
+        json.dump(results_dict, f, indent=2, ensure_ascii=False)
+    
+    print(f"\n✅ 结果已保存到: {results_file}")
+
+
+def print_statistics():
+    """打印统计信息"""
+    global WORKFLOW_METRICS
+    
+    if not WORKFLOW_METRICS:
+        print("⚠️  没有收集到任何指标数据")
+        return
+    
+    print("\n" + "=" * 70)
+    print("📈 改进版 Coder Agent 基准测试结果")
+    print("=" * 70)
+    
+    # 成功率统计
+    successful = sum(1 for m in WORKFLOW_METRICS if m.success)
+    success_rate = successful / len(WORKFLOW_METRICS)
+    
+    print(f"\n✅ 成功率: {success_rate:.2%} ({successful}/{len(WORKFLOW_METRICS)})")
+    
+    # 质量分数统计
+    quality_scores = [m.final_quality_score for m in WORKFLOW_METRICS]
+    print(f"\n🎯 质量分数统计:")
+    print(f"  平均: {np.mean(quality_scores):.3f}")
+    print(f"  中位数: {np.median(quality_scores):.3f}")
+    print(f"  最小值: {np.min(quality_scores):.3f}")
+    print(f"  最大值: {np.max(quality_scores):.3f}")
+    
+    # 迭代和修复统计
+    avg_iterations = np.mean([m.num_iterations for m in WORKFLOW_METRICS])
+    avg_revisions = np.mean([m.num_revisions for m in WORKFLOW_METRICS])
+    revision_workflows = sum(1 for m in WORKFLOW_METRICS if m.num_revisions > 0)
+    
+    print(f"\n🔄 迭代与修复统计:")
+    print(f"  平均迭代次数: {avg_iterations:.2f}")
+    print(f"  平均修复次数: {avg_revisions:.2f}")
+    print(f"  触发修复的工作流: {revision_workflows}/{len(WORKFLOW_METRICS)} ({revision_workflows/len(WORKFLOW_METRICS):.2%})")
+    
+    # 延迟统计
+    total_latencies = [m.total_latency for m in WORKFLOW_METRICS]
+    planner_latencies = [m.planner_latency for m in WORKFLOW_METRICS]
+    workers_latencies = [m.workers_latency for m in WORKFLOW_METRICS]
+    evaluators_latencies = [m.evaluators_latency for m in WORKFLOW_METRICS]
+    verifier_latencies = [m.verifier_latency for m in WORKFLOW_METRICS]
+    
+    print(f"\n📊 延迟统计 (毫秒):")
+    print(f"  总延迟:")
+    print(f"    平均: {np.mean(total_latencies):.2f}")
+    print(f"    中位数: {np.median(total_latencies):.2f}")
+    print(f"    P95: {np.percentile(total_latencies, 95):.2f}")
+    print(f"    P99: {np.percentile(total_latencies, 99):.2f}")
+    
+    print(f"\n  各阶段平均延迟:")
+    total_avg = np.mean(total_latencies)
+    if total_avg > 0:
+        print(f"    Planner:    {np.mean(planner_latencies):>10.2f} ms ({np.mean(planner_latencies)/total_avg*100:>5.1f}%)")
+        print(f"    Workers:    {np.mean(workers_latencies):>10.2f} ms ({np.mean(workers_latencies)/total_avg*100:>5.1f}%)")
+        print(f"    Evaluators: {np.mean(evaluators_latencies):>10.2f} ms ({np.mean(evaluators_latencies)/total_avg*100:>5.1f}%)")
+        print(f"    Verifier:   {np.mean(verifier_latencies):>10.2f} ms ({np.mean(verifier_latencies)/total_avg*100:>5.1f}%)")
+    else:
+        print(f"    Planner:    {np.mean(planner_latencies):>10.2f} ms")
+        print(f"    Workers:    {np.mean(workers_latencies):>10.2f} ms")
+        print(f"    Evaluators: {np.mean(evaluators_latencies):>10.2f} ms")
+        print(f"    Verifier:   {np.mean(verifier_latencies):>10.2f} ms")
+    
+    # 子任务统计
+    avg_subtasks = np.mean([m.num_subtasks for m in WORKFLOW_METRICS])
+    
+    print(f"\n📋 子任务统计:")
+    print(f"  平均子任务数: {avg_subtasks:.2f}")
+    
+    # 详细的迭代分布
+    iteration_counts = {}
+    for m in WORKFLOW_METRICS:
+        iteration_counts[m.num_iterations] = iteration_counts.get(m.num_iterations, 0) + 1
+    
+    print(f"\n📊 迭代次数分布:")
+    for iter_num in sorted(iteration_counts.keys()):
+        count = iteration_counts[iter_num]
+        percentage = count / len(WORKFLOW_METRICS) * 100
+        print(f"  {iter_num} 次迭代: {count:>3} 个工作流 ({percentage:>5.1f}%)")
+
+
+# ==================== 主函数 ====================
+
+def main(args: argparse.Namespace):
+    """主函数"""
+    print("=" * 70)
+    print("🤖 改进版 Coder Agent 基准测试")
+    print("   工作流: Planner → Workers → Evaluators → Verifier")
+    print("=" * 70)
+    print(f"参数: {args}\n")
+    
+    # 设置随机种子
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    
+    # 创建 Agent configs
+    print("🔧 准备智能体配置...")
+    planner_config = AgentConfig(
+        name="Planner",
+        llm_model_name=args.planner_model,
+        temperature=0.1,
+        max_tokens=args.max_tokens
+    )
+    
+    worker_config = AgentConfig(
+        name="Worker",
+        llm_model_name=args.worker_model,
+        temperature=0.3,
+        max_tokens=args.max_tokens
+    )
+    
+    evaluator_config = AgentConfig(
+        name="Evaluator",
+        llm_model_name=args.evaluator_model,
+        temperature=0.0,
+        max_tokens=args.max_tokens
+    )
+    
+    verifier_config = AgentConfig(
+        name="Verifier",
+        llm_model_name=args.verifier_model,
+        temperature=0.0,
+        max_tokens=args.max_tokens 
+    )
+    
+    # 创建 ImprovedCoderAgent
+    print("🔧 创建改进版 Coder Agent...")
+    agent = ImprovedCoderAgent(
+        planner_config=planner_config,
+        worker_config=worker_config,
+        evaluator_config=evaluator_config,
+        verifier_config=verifier_config,
+        max_iterations=args.max_iterations
+    )
+    
+    # 生成测试请求
+    print(f"📊 生成 {args.num_apps} 个测试请求...")
+    input_requests = sample_requests(args.num_apps, args.prompts_file)
+    
+    # 运行基准测试
+    print(f"\n🚀 开始基准测试...")
+    print(f"  工作流数量: {args.num_apps}")
+    print(f"  请求速率: {args.request_rate} req/s")
+    print(f"  最大迭代次数: {args.max_iterations}")
+    print(f"  Planner模型: {args.planner_model}")
+    print(f"  Worker模型: {args.worker_model}")
+    print(f"  Evaluator模型: {args.evaluator_model}")
+    print(f"  Verifier模型: {args.verifier_model}\n")
+    
+    benchmark_start_time = time.perf_counter_ns()
+    
+    asyncio.run(
+        benchmark(
+            input_requests=input_requests,
+            request_rate=args.request_rate,
+            agent=agent
+        )
+    )
+    
+    benchmark_end_time = time.perf_counter_ns()
+    benchmark_time_ms = (benchmark_end_time - benchmark_start_time) / 1e6
+    
+    # 打印全局统计
+    print("\n" + "=" * 70)
+    print(f"⏱️  总时间: {benchmark_time_ms / 1000:.2f} s")
+    print(f"🚀 吞吐量: {args.num_apps * 1000 / benchmark_time_ms:.2f} 工作流/秒")
+    
+    # 打印详细统计
+    print_statistics()
+    
+    
+    # 保存结果
+    if args.output_file:
+        save_results_to_file(args.output_file)
+    
+    print("\n" + "=" * 70)
+    print("🎉 基准测试完成!")
+    print("=" * 70)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(
+        description="改进版 Coder Agent 基准测试"
+    )
+    
+    # 基准测试参数
+    parser.add_argument(
+        "--num-apps",
+        type=int,
+        default=10,
+        help="要处理的工作流数量"
+    )
+    parser.add_argument(
+        "--request-rate",
+        type=float,
+        default=float("inf"),
+        help="请求速率 (请求/秒)，inf表示无限速率"
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="随机种子"
+    )
+    
+    # 模型参数
+    parser.add_argument(
+        "--planner-model",
+        type=str,
+        default="gpt-3.5-turbo",
+        help="Planner模型名称"
+    )
+    parser.add_argument(
+        "--worker-model",
+        type=str,
+        default="gpt-3.5-turbo",
+        help="Worker模型名称"
+    )
+    parser.add_argument(
+        "--evaluator-model",
+        type=str,
+        default="gpt-3.5-turbo",
+        help="Evaluator模型名称"
+    )
+    parser.add_argument(
+        "--verifier-model",
+        type=str,
+        default="gpt-3.5-turbo",
+        help="Verifier模型名称"
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=200,
+        help="每个阶段的最大token数"
+    )
+    
+    # 输入/输出参数
+    parser.add_argument(
+        "--prompts-file",
+        type=str,
+        default=None,
+        help="包含用户提示的文件路径 (每行一个提示)"
+    )
+    parser.add_argument(
+        "--output-file",
+        type=str,
+        default="improved_coder_benchmark_results.json",
+        help="结果输出文件路径"
+    )
+    
+    # 工作流参数
+    parser.add_argument(
+        "--max-iterations",
+        type=int,
+        default=2,
+        help="最大迭代次数（包括初始执行）"
+    )
+    
+    args = parser.parse_args()
+    main(args)

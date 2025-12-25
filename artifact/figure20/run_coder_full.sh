@@ -31,7 +31,7 @@ do
     # Launch dual vLLM workers (similar to figure19)
     # GPU 0 for main generation, GPU 1 for verification/refinement
     echo "Starting vLLM workers..."
-    bash ../fastchat_scripts/launch_vllm_multi_7b.sh
+    bash ../fastchat_scripts/launch_vllm_multi.sh
 
     # Set OpenAI API environment
     export OPENAI_API_BASE=http://0.0.0.0:8000/v1
@@ -43,6 +43,16 @@ do
 
     # Run coder agent benchmark
     echo "Running Coder Agent benchmark..."
+
+
+    python3 start_benchmark_coder.py &> coder_client.log
+
+    # Parse results
+    #python3 parse_coder_results.py >> result_coder_vllm.txt
+
+    bash ../../scripts/kill_all_fastchat_servers.sh
+done
+    '''
     python3 start_benchmark_coder.py \
         --num-requests 50 \
         --concurrency 5 \
@@ -103,3 +113,5 @@ echo "  cat result_coder_vllm.txt"
 echo ""
 echo "View detailed JSON results:"
 echo "  cat ./results/coder_results_run1.json | python3 -m json.tool"
+    '''
+    
