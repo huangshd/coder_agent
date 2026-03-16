@@ -9,7 +9,7 @@ COPY . /install
 RUN nvcc --version
 
 RUN cd /install && pip install -r requirements.txt
-RUN cd /install/3rdparty/vllm && export CUDA_HOME=/usr/local/cuda && pip install -e .
+RUN cd /install/3rdparty/vllm && export CUDA_HOME=/usr/local/cuda && pip install --no-build-isolation -e .
 RUN cd /install/3rdparty/FastChat && pip install -e ".[model_worker,webui]"
 RUN cd /install/3rdparty/langchain/libs/langchain && pip install -e .
 RUN pip install triton==2.1.0

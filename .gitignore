@@ -214,6 +214,26 @@ csx/
 ecf/
 rcf/
 
+# CoFlow local environment and experiment outputs
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+
+# Runtime logs
+*.log
+artifact/figure20/*.log
+
+# Local experiment outputs
+artifact/figure20/results/
+artifact/figure21/results/
+
 # Windows Store app package directories and files
 AppPackages/
 BundleArtifacts/

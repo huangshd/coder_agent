@@ -1,0 +1,85 @@
+Fetching 2 files:   0%|          | 0/2 [00:00<?, ?it/s]Fetching 2 files: 100%|██████████| 2/2 [00:00<00:00, 19553.86it/s]
+/opt/conda/lib/python3.10/site-packages/torch/_utils.py:831: UserWarning: TypedStorage is deprecated. It will be removed in the future and UntypedStorage will be the only storage class. This should only matter to you if you are using storages directly.  To access UntypedStorage directly, use tensor.untyped_storage() instead of tensor.storage()
+  return self.fget.__get__(instance, owner)()
+INFO:     Started server process [2990]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:9001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:44194 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44204 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44214 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44224 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44238 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44240 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51536 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51546 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51558 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51562 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51578 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51588 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51640 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51594 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51604 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51618 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51632 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51644 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51650 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51666 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51680 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46070 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46074 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46080 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46092 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46104 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57740 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57756 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57770 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57806 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57774 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57778 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57792 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57816 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57850 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57856 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57868 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57828 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57842 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57876 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57888 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57892 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57908 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57924 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57930 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57944 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57954 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57962 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57966 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57982 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57984 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38772 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38780 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38790 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38796 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38812 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38816 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38832 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38836 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38838 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38852 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38856 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38868 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36410 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36412 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36422 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36438 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36444 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36460 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36464 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33662 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33670 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33684 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42956 - "POST /free_context HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42958 - "POST /fill HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42968 - "POST /generate_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53578 - "POST /free_context HTTP/1.1" 200 OK
